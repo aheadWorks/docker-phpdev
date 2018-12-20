@@ -4,6 +4,7 @@ Run to generate Dockerfiles for desired PHP versions
 """
 from pathlib import Path
 from shutil import copyfile
+from distutils.version import StrictVersion
 
 
 head = """#
@@ -31,7 +32,17 @@ with open('Dockerfile.template') as df:
             path = (Path() / (ver + ("-xdebug" if xdebug else "")))
             path.mkdir(exist_ok=True)
 
-            new_content = contents.replace('%%PHP_VERSION%%', ver).replace('%%WITH_XDEBUG%%', xdebug)
+            # Install old XDebug for PHP 5.6 family
+            xdv = ''
+            if StrictVersion(ver) <= StrictVersion('5.6.99') and xdebug:
+                xdv = '-2.5.5'
+
+            new_content = contents\
+                .replace('%%PHP_VERSION%%', ver)\
+                .replace('%%WITH_XDEBUG%%', xdebug)\
+                .replace('%%XDEBUG_VERSION%%', xdv)
+
+
 
             (path / 'Dockerfile').write_text(head + new_content)
             for p in Path().glob('*'):

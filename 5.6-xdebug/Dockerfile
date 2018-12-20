@@ -43,7 +43,7 @@ RUN apk --no-cache add --virtual .build-dependencies ${_TEMPORARY_REQUIREMENTS} 
     && docker-php-ext-install soap \
     && docker-php-ext-install bcmath \
     && if [ "$WITH_XDEBUG" ] ; \
-     then pecl install xdebug && docker-php-ext-enable xdebug \
+     then pecl install xdebug-2.5.5 && docker-php-ext-enable xdebug \
         && echo "xdebug.idekey=${XDEBUG_IDEKEY}" >> /usr/local/etc/php/conf.d/xdebug.ini \
         && echo "xdebug.remote_enable=${XDEBUG_REMOTE_ENABLE}" >> /usr/local/etc/php/conf.d/xdebug.ini \
         && echo "xdebug.remote_port=${XDEBUG_REMOTE_PORT}" >> /usr/local/etc/php/conf.d/xdebug.ini \
