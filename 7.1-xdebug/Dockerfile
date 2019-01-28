@@ -22,7 +22,13 @@ ARG WITH_XDEBUG="1"
 ARG XDEBUG_IDEKEY="PHPSTORM"
 ARG XDEBUG_REMOTE_ENABLE="on"
 ARG XDEBUG_REMOTE_PORT=9001
-ARG XDEBUG_REMOTE_CONNECT_BACK="on"
+ARG XDEBUG_REMOTE_CONNECT_BACK="1"
+
+ENV XDEBUG_IDEKEY=${XDEBUG_IDEKEY}
+ENV XDEBUG_REMOTE_ENABLE=${XDEBUG_REMOTE_ENABLE}
+ENV XDEBUG_REMOTE_PORT=${XDEBUG_REMOTE_PORT}
+ENV XDEBUG_REMOTE_CONNECT_BACK=${XDEBUG_REMOTE_CONNECT_BACK}
+ENV XDEBUG_REMOTE_HOST="host.docker.internal"
 
 ### End of arguments/config section ###
 
@@ -44,10 +50,11 @@ RUN apk --no-cache add --virtual .build-dependencies ${_TEMPORARY_REQUIREMENTS} 
     && docker-php-ext-install bcmath \
     && if [ "$WITH_XDEBUG" ] ; \
      then pecl install xdebug && docker-php-ext-enable xdebug \
-        && echo "xdebug.idekey=${XDEBUG_IDEKEY}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-        && echo "xdebug.remote_enable=${XDEBUG_REMOTE_ENABLE}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-        && echo "xdebug.remote_port=${XDEBUG_REMOTE_PORT}" >> /usr/local/etc/php/conf.d/xdebug.ini \
-        && echo "xdebug.remote_connect_back=${XDEBUG_REMOTE_CONNECT_BACK}" >> /usr/local/etc/php/conf.d/xdebug.ini; \
+        && echo "xdebug.idekey=\${XDEBUG_IDEKEY}" >> /usr/local/etc/php/conf.d/xdebug.ini \
+        && echo "xdebug.remote_enable=\${XDEBUG_REMOTE_ENABLE}" >> /usr/local/etc/php/conf.d/xdebug.ini \
+        && echo "xdebug.remote_port=\${XDEBUG_REMOTE_PORT}" >> /usr/local/etc/php/conf.d/xdebug.ini \
+        && echo "xdebug.remote_connect_back=\${XDEBUG_REMOTE_CONNECT_BACK}" >> /usr/local/etc/php/conf.d/xdebug.ini \
+        && echo "xdebug.remote_host=\${XDEBUG_REMOTE_HOST}" >> /usr/local/etc/php/conf.d/xdebug.ini; \
     fi \
     && if python3 -c "from distutils.version import StrictVersion; exit(StrictVersion('7.2') <= StrictVersion('${PHP_VERSION}'))"; then \
         docker-php-ext-install mcrypt; \
@@ -72,12 +79,19 @@ RUN mkdir -p /run/nginx
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 
 # Fine tune PHP params
-RUN find  /usr/local/etc/php-fpm.d/ -type f -name *.conf | xargs sed -i "s/pm.max_children = 5/pm.max_children = 50/g"
+RUN find  /usr/local/etc/php-fpm.d/ -type f -name *.conf | xargs sed -i "s/pm.max_children = 5/pm.max_children = 50/g" \
+    && find  /usr/local/etc/php-fpm.d/ -type f -name *.conf | xargs sed -i "s/pm.start_servers = 2/pm.start_servers = 10/g" \
+    && find  /usr/local/etc/php-fpm.d/ -type f -name *.conf | xargs sed -i "s/pm.min_spare_servers = 1/pm.min_spare_servers = 10/g" \
+    && find  /usr/local/etc/php-fpm.d/ -type f -name *.conf | xargs sed -i "s/pm.max_spare_servers = 3/pm.max_spare_servers  = 20/g"
 
 # mhsendmail
 COPY --from=mhsendmail /usr/bin/mhsendmail /usr/bin/mhsendmail
 RUN echo "sendmail_path=/usr/bin/mhsendmail --smtp-addr \$MAIL_HOST:25 " > /usr/local/etc/php/conf.d/sendmail.ini
 
+# Update host machine script
+RUN echo "ip -4 route list match 0/0 | awk '{print \$3\" host.machine\"}' >> /etc/hosts" > /update-host-machine.sh && chmod +x /update-host-machine.sh
+
+# entrypoint & cmd
 ADD entrypoint.py /entrypoint.py
 RUN chmod +x /entrypoint.py
 

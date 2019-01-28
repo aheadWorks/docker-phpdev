@@ -9,6 +9,7 @@ import subprocess
 @click.argument('args', nargs=-1, type=click.UNPROCESSED)
 @click.pass_context
 def cli(ctx, args):
+    subprocess.check_call("sh /update-host-machine.sh", shell=True)
     try:
         if args[0] == 'serve':
             ctx.invoke(serve)

@@ -71,3 +71,7 @@ When run with `docker run` passes params directly to shell
 docker run aheadworks/phpdev:7.2 uname -a
 Linux b89a1a21b62d 4.9.125-linuxkit #1 SMP Fri Sep 7 08:20:28 UTC 2018 x86_64 Linux
 ```
+
+## Running XDebug on Windows/Mac
+Due to bug non-transparent routing under Mac/Win platforms set `XDEBUG_REMOTE_CONNECT_BACK` to `0`. 
+This will force XDebug to connect back to `host.docker.internal`(which is common alias to host machine).
