@@ -61,6 +61,9 @@ RUN sed -i s/'user = www-data'/'user = ${FPM_USER}'/g /usr/local/etc/php-fpm.d/w
     && sed -i s/'group = www-data'/'group = ${FPM_GROUP}'/g /usr/local/etc/php-fpm.d/www.conf
 
 # PHP settings
+RUN echo "post_max_size=256M" >> /usr/local/etc/php/conf.d/upload-limit.ini \
+    && echo "upload_max_filesize=256M" >> /usr/local/etc/php/conf.d/upload-limit.ini
+
 RUN echo "memory_limit=${PHP_MEMORY_LIMIT}" > /usr/local/etc/php/conf.d/memory-limit.ini
 RUN apk add --no-cache --virtual .curl curl \
     && curl -sS https://getcomposer.org/installer | php \
