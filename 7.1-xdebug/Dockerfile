@@ -33,7 +33,7 @@ ENV XDEBUG_REMOTE_HOST="host.docker.internal"
 ### End of arguments/config section ###
 
 MAINTAINER Peter Samoilov <samoilov@aheadworks.com>
-ENV _TEMPORARY_REQUIREMENTS="build-base libpng-dev libmcrypt-dev curl-dev libjpeg-turbo-dev freetype-dev icu-dev libxslt-dev $PHPIZE_DEPS"
+ENV _TEMPORARY_REQUIREMENTS="build-base libpng-dev libmcrypt-dev curl-dev libjpeg-turbo-dev freetype-dev icu-dev libxslt-dev libzip-dev $PHPIZE_DEPS"
 ENV _COMMON_REQUIREMENTS="nginx py3-click libmcrypt libpng freetype libjpeg-turbo icu-libs libxslt"
 
 RUN apk --no-cache add ${_COMMON_REQUIREMENTS}
@@ -60,6 +60,10 @@ RUN apk --no-cache add --virtual .build-dependencies ${_TEMPORARY_REQUIREMENTS} 
         docker-php-ext-install mcrypt; \
     fi \
     && apk del .build-dependencies
+
+# replace iconv with GNU iconv
+RUN apk add gnu-libiconv --update-cache --repository http://dl-cdn.alpinelinux.org/alpine/edge/community/ --allow-untrusted
+ENV LD_PRELOAD /usr/lib/preloadable_libiconv.so php
 
 # Patch php-fpm to work as custom user
 RUN sed -i s/'user = www-data'/'user = ${FPM_USER}'/g /usr/local/etc/php-fpm.d/www.conf \
