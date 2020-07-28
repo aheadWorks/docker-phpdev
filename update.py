@@ -17,6 +17,7 @@ head = """#
 files_to_copy = ("nginx.conf", "entrypoint.py")
 
 php_versions = {
+    "7.4": files_to_copy,
     "7.3": files_to_copy,
     "7.2": files_to_copy,
     "7.1": files_to_copy,
